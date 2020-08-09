@@ -12,7 +12,12 @@ After you've cloned this repo, cd into it and then create a local virtualenv by 
 python3 -m venv .
 ```
 
-This creates a local virtualenv, which you now need to activate(For that, look into the subsection Activating and Deactivating).
+This creates a local virtualenv, which you now need to activate:
+
+```bash
+source bin/activate
+```
+
 After that, you can install the required packages with.
 
 ```bash
