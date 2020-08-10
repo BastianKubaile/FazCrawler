@@ -2,10 +2,17 @@ import os
 import requests
 from lxml import html
 
-from utils import extract_articles
+from utils import extract_articles, extract_article, get_tree
 
-os.environ["debug"] = "y"
+os.environ["debug"] = "n"
+os.environ["print"] = "y"
 
-page = requests.get("https://www.faz.net")
-tree = html.fromstring(page.content)
-extract_articles(tree)
+if __name__ == "__main__":
+    tree = get_tree("https://www.faz.net")
+    articles = extract_articles(tree)
+
+    for article in articles:
+        if article["is_premium"]:
+            continue
+        extract_article(article["url"])
+        break
