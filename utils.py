@@ -1,6 +1,10 @@
 import os
+from datetime import datetime
+import re
+
 from lxml import etree, html
 import requests
+import dateutil.parser
 
 def extract_articles(tree):
     toReturn = []
@@ -39,7 +43,15 @@ def extract_articles(tree):
 def extract_article(url):
     # Extracts the data from the article
     toReturn = {}
+    toReturn["url"] = url
+    p = re.compile("(?<=faz.net/aktuell/).+?(?=/)")
+    toReturn["resort"] = p.search(url).group()
     tree = get_tree(url)
+
+    toReturn["header"] = tree.xpath("//span[@class='atc-HeadlineEmphasisText']")[0].text_content()
+    toReturn["headline"] = tree.xpath("//span[@class='atc-HeadlineText']")[0].text_content()
+    toReturn["update_at"] = _extract_time(tree)
+    toReturn["author"] = _extract_author(tree)
 
     toReturn["article"] = _extract_text_from_page(tree)
     for other_page_url in _get_other_pages(tree):
@@ -50,7 +62,7 @@ def extract_article(url):
     #url: The url of the article
     #header: The Header of the article(not the headline)
     #headline: The Headline of the article(below the header)
-    #authors: Array of the authors
+    #author: The author
     #updated_at: The time and date last change of this article, saved as String in the format YYYY-MM-DD HH:MM
     #description: Description of the article(below the Headline)
     #article: The text of the article, saved in a string. Each p Element shall be seperated by new Lines. After an in article headline(h3), there shall be two new lines
@@ -75,6 +87,14 @@ def _extract_text_from_page(tree):
         else:
             text += "\n"
     return text
+
+def _extract_time(tree):
+    time_str = tree.xpath("//time[@class='atc-MetaTime']")[0].get("datetime")
+    return dateutil.parser.isoparse(time_str)
+
+def _extract_author(tree):
+    author_element = tree.xpath("//a[@class='atc-MetaAuthorLink'] | //span[@class='atc-MetaAuthor']")
+    return "" if len(author_element) == 0 else author_element[0].text_content()
 
 def has_flag(name):
     return os.environ.get(name) == "y"
