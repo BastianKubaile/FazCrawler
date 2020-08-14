@@ -29,6 +29,9 @@ def extract_articles(tree):
         temp = {}
         temp["url"] = link_element.get("href")
         temp["is_premium"] = True if link_element.get("data-is-premium") == "true" else False
+        if "blogs.faz.net" in temp["url"]:
+            #We don't parse Blogs
+            continue
         toReturn.append(temp)
         
         if has_flag("print"):
@@ -44,10 +47,15 @@ def extract_article(url):
     # Extracts the data from the article
     toReturn = {}
     toReturn["url"] = url
-    p = re.compile("(?<=faz.net/aktuell/).+?(?=/)")
+    p = re.compile("((?<=faz.net/aktuell/)|(?<=faz.net/podcasts/)).+?(?=/)")
     toReturn["resort"] = p.search(url).group()
     tree = get_tree(url)
 
+    toReturn["article"] = _extract_text_from_page(tree)
+    if toReturn["article"] == "":
+        #This is some non standard article, we can't even parse the text. Return None 
+        return None
+    
     toReturn["header"] = tree.xpath("//span[@class='atc-HeadlineEmphasisText']")[0].text_content()
     toReturn["headline"] = tree.xpath("//span[@class='atc-HeadlineText']")[0].text_content()
     toReturn["description"] = tree.xpath("//p[@class='atc-IntroText']")[0].text_content()
@@ -55,7 +63,6 @@ def extract_article(url):
     toReturn["author"] = _extract_author(tree)
     toReturn["article_class"] = _extract_article_class(tree)
 
-    toReturn["article"] = _extract_text_from_page(tree)
     for other_page_url in _get_other_pages(tree):
         page_tree = get_tree(other_page_url)
         toReturn["article"] += _extract_text_from_page(page_tree)

@@ -16,5 +16,5 @@ if __name__ == "__main__":
         if article["is_premium"]:
             continue
         article = extract_article(article["url"])
-        save_article(article)
-        break
+        if article != None:
+            save_article(article)
