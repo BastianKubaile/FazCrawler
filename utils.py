@@ -50,8 +50,10 @@ def extract_article(url):
 
     toReturn["header"] = tree.xpath("//span[@class='atc-HeadlineEmphasisText']")[0].text_content()
     toReturn["headline"] = tree.xpath("//span[@class='atc-HeadlineText']")[0].text_content()
+    toReturn["description"] = tree.xpath("//p[@class='atc-IntroText']")[0].text_content()
     toReturn["update_at"] = _extract_time(tree)
     toReturn["author"] = _extract_author(tree)
+    toReturn["article_class"] = _extract_article_class(tree)
 
     toReturn["article"] = _extract_text_from_page(tree)
     for other_page_url in _get_other_pages(tree):
@@ -95,6 +97,16 @@ def _extract_time(tree):
 def _extract_author(tree):
     author_element = tree.xpath("//a[@class='atc-MetaAuthorLink'] | //span[@class='atc-MetaAuthor']")
     return "" if len(author_element) == 0 else author_element[0].text_content()
+
+def _extract_article_class(tree):
+    preceding_author_elements = tree.xpath("//span[@class='atc-MetaAuthorText']")
+    if len(preceding_author_elements) == 0:
+        return "Nachricht"
+    preceding_author_text = preceding_author_elements[0].text_content()
+    if "Kommentar" in preceding_author_text:
+        return "Kommentar"
+    else:
+        return "Nachricht"
 
 def has_flag(name):
     return os.environ.get(name) == "y"
